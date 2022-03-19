@@ -1,59 +1,80 @@
-/**
- * @file Todo를 구현하기 위한 문서입니다.
- * @author Dahye Shin
- * @see {@link https://github.com/dahye1013/ts-todo-list}
- */
-
-import Tag from "./Tag";
 import Todo from "./Todo";
 import Todos from "./Todos";
 
-const todos = new Todos();
+const App = () => {
+  const form = document.querySelector("form");
+  const ul = document.querySelector("ul");
+  const allRemove = document.querySelector("#all-remove");
 
-console.log("🚀🚀🚀 TODO 동작 테스트 🚀🚀🚀");
+  const App = new Todos();
 
-todos.addTodo(
-  new Todo({
-    id: 1,
-    content: "첫번째 Todo",
-    complete: false,
-    category: "카테고리1",
-    tags: [
-      new Tag({ id: 1, name: "태그1" }),
-      new Tag({ id: 2, name: "태그2" }),
-      new Tag({ id: 3, name: "태그3" }),
-    ],
-  })
-);
+  const render = () => {
+    console.log(App.todos);
 
-todos.addTodo(
-  new Todo({
-    id: 2,
-    content: "두번째 Todo",
-    complete: false,
-    category: "카테고리1",
-    tags: [],
-  })
-);
+    ul.innerHTML =
+      App.todos
+        ?.map(
+          ({ id, content, complete, category, tags }) =>
+            `<li data-id=${id}>
+              ${content}
+              <button class="delete">X</button>
+              ${complete === true ? "완료" : "미완료"}
+              <button class="toggle">상태변경</button>
+              <span>카테고리: ${category}</span>
+              <div>태그: ${tags?.join(", ")}</div>
+            </li>`
+        )
+        .join("") || "";
+  };
 
-todos.addTodo(
-  new Todo({
-    id: 3,
-    content: "세번째 Todo",
-    complete: false,
-    category: "카테고리1",
-    tags: [],
-  })
-);
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
 
-todos.findAllTodos();
+    const content = e.target["content"].value;
+    const category = e.target["category"].value;
+    const tags = e.target["tags"].value.split(",").filter((tag) => tag !== "");
 
-todos.findTodoById(1);
+    App.addTodo(
+      new Todo({
+        complete: false,
+        content,
+        category,
+        tags,
+      })
+    );
 
-todos.removeTagByTodoIdAndTagId(1, 1);
+    render();
+  });
 
-todos.removeAllTagByTodoId(1);
+  ul.addEventListener("click", ({ target }) => {
+    if (target instanceof Element) {
+      if (target.classList.contains("delete")) {
+        console.log("delete");
+        App.removeTodoById(target.closest("li").dataset.id);
+        render();
+        return;
+      }
 
-todos.removeTodoById(1);
+      if (target.classList.contains("toggle")) {
+        console.log("toggle");
+        const targetTodo = App.findTodoById(target.closest("li").dataset.id);
 
-todos.removeAllTodo();
+        console.log(targetTodo);
+
+        App.updateTodoById({ ...targetTodo, complete: !targetTodo.complete });
+        render();
+        return;
+      }
+    }
+  });
+
+  allRemove.addEventListener("click", () => {
+    // App.removeAllTodo();
+    App.todos = [];
+    render();
+  });
+};
+
+window.onload = () => {
+  App();
+};
